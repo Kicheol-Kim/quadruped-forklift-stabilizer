@@ -15,10 +15,13 @@ namespace UNITREE_LEGGED_SDK
 enum class LeggedType { 
 	Aliengo,
 	A1,
-	Go1,
-	B1
+	Go1
 };
 
+enum class HighLevelType {
+	Basic,
+	Sport
+};
 
 string VersionSDK();
 int InitEnvironment();      // memory lock

@@ -1,0 +1,56 @@
+[
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/example_position.dir/examples/example_position.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_position.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_position.cpp",
+  "output": "CMakeFiles/example_position.dir/examples/example_position.cpp.o"
+},
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/example_velocity.dir/examples/example_velocity.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_velocity.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_velocity.cpp",
+  "output": "CMakeFiles/example_velocity.dir/examples/example_velocity.cpp.o"
+},
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/example_torque.dir/examples/example_torque.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_torque.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_torque.cpp",
+  "output": "CMakeFiles/example_torque.dir/examples/example_torque.cpp.o"
+},
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/example_walk.dir/examples/example_walk.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_walk.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_walk.cpp",
+  "output": "CMakeFiles/example_walk.dir/examples/example_walk.cpp.o"
+},
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/example_wirelessHandle.dir/examples/example_wirelessHandle.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_wirelessHandle.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/example_wirelessHandle.cpp",
+  "output": "CMakeFiles/example_wirelessHandle.dir/examples/example_wirelessHandle.cpp.o"
+},
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/udp_send_test.dir/examples/multi_pc_udp_send.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/multi_pc_udp_send.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/multi_pc_udp_send.cpp",
+  "output": "CMakeFiles/udp_send_test.dir/examples/multi_pc_udp_send.cpp.o"
+},
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/udp_recv_test.dir/examples/multi_pc_udp_recv.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/multi_pc_udp_recv.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/multi_pc_udp_recv.cpp",
+  "output": "CMakeFiles/udp_recv_test.dir/examples/multi_pc_udp_recv.cpp.o"
+},
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/lcm_server.dir/examples/lcm_server.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/lcm_server.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/lcm_server.cpp",
+  "output": "CMakeFiles/lcm_server.dir/examples/lcm_server.cpp.o"
+},
+{
+  "directory": "/home/rml-asus/quadrupped-forklift-stabilizing/build",
+  "command": "/usr/bin/c++  -I/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/include -O3 -g   -fPIC -std=c++11 -o CMakeFiles/go1_engine.dir/examples/go1_engine.cpp.o -c /home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/go1_engine.cpp",
+  "file": "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/go1_engine.cpp",
+  "output": "CMakeFiles/go1_engine.dir/examples/go1_engine.cpp.o"
+}
+]

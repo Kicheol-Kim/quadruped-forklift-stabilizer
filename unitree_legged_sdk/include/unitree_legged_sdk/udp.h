@@ -42,28 +42,28 @@ namespace UNITREE_LEGGED_SDK
     // Notice: User defined data(like struct) should add crc(4Byte) at the end.
     class UDP {
 	public:
-        UDP(uint8_t level, uint16_t localPort, const char* targetIP, uint16_t targetPort);  // udp use dafault length according to level
+        UDP(uint8_t level, HighLevelType highControl = HighLevelType::Basic);  // unitree dafault IP and Port
         UDP(uint16_t localPort, const char* targetIP, uint16_t targetPort, 
             int sendLength, int recvLength, bool initiativeDisconnect = false, RecvEnum recvType = RecvEnum::nonBlock);
         UDP(uint16_t localPort, 
             int sendLength, int recvLength, bool initiativeDisconnect = false, RecvEnum recvType = RecvEnum::nonBlock, bool setIpPort = false);  
         ~UDP();
-
+        
         void SetIpPort(const char* targetIP, uint16_t targetPort);        // if not indicated at constructor function
         void SetRecvTimeout(int time);                                    // use in RecvEnum::blockTimeout  (unit: ms)
         
         void SetDisconnectTime(float callback_dt, float disconnectTime);  // initiativeDisconnect = true, disconnect for another IP to connect
         void SetAccessibleTime(float callback_dt, float accessibleTime);  // check if can access data
 
+        int SetSend(char*);
+        void GetRecv(char*);
         int Send();
         int Recv(); // directly save in buffer
 
         void InitCmdData(HighCmd& cmd);
         void InitCmdData(LowCmd& cmd);
-        int SetSend(char*);
-        int SetSend(HighCmd&);
+		int SetSend(HighCmd&);
         int SetSend(LowCmd&);
-        void GetRecv(char*);
         void GetRecv(HighState&);
         void GetRecv(LowState&);
 
@@ -77,23 +77,24 @@ namespace UNITREE_LEGGED_SDK
     private:
         void init(uint16_t localPort, const char* targetIP = NULL, uint16_t targetPort = 0);
         
+        uint8_t levelFlag = HIGHLEVEL;   // default: high level
         int sockFd;
         bool connected;                  // udp works with connect() function, rather than server mode
         int sendLength;
         int recvLength;
-        int lose_recv;
-
         char* recvBuf;
-        char* recvAvaliable;
+        char* recvSource;
         char* sendBuf;
-        pthread_mutex_t sendMutex;
-        pthread_mutex_t recvMutex;
-        pthread_mutex_t udpMutex;
+        int lose_recv;
 
         bool nonblock = true;
         int blockTimeout = -1;             // use time out method or not, (unit: ms)
         bool initiativeDisconnect = false;           // 
+        // bool initAsServer = false;
 
+        pthread_mutex_t sendMutex;
+        pthread_mutex_t recvMutex;
+        pthread_mutex_t udpMutex;
 	};
 
 }

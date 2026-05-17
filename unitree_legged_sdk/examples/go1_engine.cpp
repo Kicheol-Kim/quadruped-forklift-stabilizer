@@ -5,12 +5,13 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+#include <string.h> // for strlen
 #include "unitree_legged_sdk/unitree_legged_sdk.h"
 
 using namespace UNITREE_LEGGED_SDK;
 
 int main() {
-    std::cout << "🚀 [C++ Engine] Go1 제어 엔진 시작..." << std::endl;
+    std::cout << "🚀 [C++ Engine] Go1 제어 엔진 시작 (데이터 수집 확장판)..." << std::endl;
 
     // 1. Go1 통신 설정 (SDK)
     UDP udp(8090, "192.168.123.161", 8082, sizeof(HighCmd), sizeof(HighState));
@@ -27,7 +28,7 @@ int main() {
     rx_addr.sin_addr.s_addr = INADDR_ANY;
     bind(rx_sock, (struct sockaddr*)&rx_addr, sizeof(rx_addr));
 
-    // 3. 파이썬으로 IMU 데이터를 보낼 로컬 송신 소켓 (포트 9998)
+    // 3. 파이썬으로 IMU/State 데이터를 보낼 로컬 송신 소켓 (포트 9998)
     int tx_sock = socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in tx_addr;
     tx_addr.sin_family = AF_INET;
@@ -57,10 +58,10 @@ int main() {
             cmd.yawSpeed = target_yaw;
             cmd.bodyHeight = 0.1; 
         } else { // 정지 모드 (대기 상태)
-            cmd.gaitType = 0;     // 💡 누락되었던 보행 타입 초기화
+            cmd.gaitType = 0;     
             cmd.velocity[0] = 0.0;
             cmd.yawSpeed = 0.0;
-            cmd.bodyHeight = 0.0; // 💡 기본 높이로 초기화
+            cmd.bodyHeight = 0.0; 
         }
 
         // [C] 로봇에게 명령 송신 및 상태 수신
@@ -69,9 +70,20 @@ int main() {
 
         if (udp.Recv() == 0) {
             udp.GetRecv(state);
-            // 파이썬으로 현재 로봇의 Roll, Pitch(도 단위) 전송
-            char tx_buf[128];
-            snprintf(tx_buf, sizeof(tx_buf), "GO1,%.2f,%.2f", state.imu.rpy[0] * 57.2958, state.imu.rpy[1] * 57.2958);
+            
+            // 파이썬으로 보낼 확장된 상태 데이터 패킷 생성
+            // 포맷: GO1, vx, yaw_rate, roll, pitch, yaw, ax, ay, az
+            char tx_buf[256];
+            snprintf(tx_buf, sizeof(tx_buf), "GO1,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",
+                     state.velocity[0],                 // 로봇 추정 전진 속도 (m/s)
+                     state.yawSpeed,                    // 로봇 추정 회전 속도 (rad/s)
+                     state.imu.rpy[0] * 57.2958f,       // Roll (도 단위 변환)
+                     state.imu.rpy[1] * 57.2958f,       // Pitch (도 단위 변환)
+                     state.imu.rpy[2] * 57.2958f,       // Yaw (도 단위 변환)
+                     state.imu.accelerometer[0],        // X축 가속도 (m/s^2)
+                     state.imu.accelerometer[1],        // Y축 가속도 (m/s^2)
+                     state.imu.accelerometer[2]);       // Z축 가속도 (m/s^2)
+                     
             sendto(tx_sock, tx_buf, strlen(tx_buf), 0, (struct sockaddr*)&tx_addr, sizeof(tx_addr));
         }
 

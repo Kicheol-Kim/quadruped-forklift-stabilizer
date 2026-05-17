@@ -163,6 +163,12 @@ void loop() {
     target_roll_pos_shared = constrain(filtered_target_roll, ROLL_MIN, ROLL_MAX);
     target_pitch_pos_shared = constrain(filtered_target_pitch, PITCH_MIN, PITCH_MAX);
   }
+
+  // PC(파이썬)로 현재 스태빌라이저의 Roll, Pitch 전송 (115200bps 권장)
+  Serial.print("STAB,");
+  Serial.print(stab_roll);  // 계산된 아두이노 Roll 변수
+  Serial.print(",");
+  Serial.println(stab_pitch); // 계산된 아두이노 Pitch 변수
   
   delay(10); 
 }

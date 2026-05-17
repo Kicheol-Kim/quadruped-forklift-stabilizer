@@ -8,15 +8,11 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/rml-asus/quadrupped-forklift-stabilizing/unitree_legged_sdk/examples/lcm_server.cpp" "CMakeFiles/lcm_server.dir/examples/lcm_server.cpp.o" "gcc" "CMakeFiles/lcm_server.dir/examples/lcm_server.cpp.o.d"
+  "/home/kicheol/quadruped-forklift-stabilizer/unitree_legged_sdk/examples/lcm_server.cpp" "CMakeFiles/lcm_server.dir/examples/lcm_server.cpp.o" "gcc" "CMakeFiles/lcm_server.dir/examples/lcm_server.cpp.o.d"
   )
 
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
-  )
-
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
   )
 
 # Fortran module output directory.

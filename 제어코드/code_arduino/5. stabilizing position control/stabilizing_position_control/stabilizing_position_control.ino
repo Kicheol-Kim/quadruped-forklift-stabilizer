@@ -161,14 +161,21 @@ void loop() {
     float PITCH_MIN = pitch_center - (180.0 * 1.5);
 
     target_roll_pos_shared = constrain(filtered_target_roll, ROLL_MIN, ROLL_MAX);
-    target_pitch_pos_shared = constrain(filtered_target_pitch, PITCH_MIN, PITCH_MAX);
+    ta/home/kicheol/quadruped-forklift-stabilizer/제어코드/code_arduino/8. collecting data/stabilizer/stabilizer.inorget_pitch_pos_shared = constrain(filtered_target_pitch, PITCH_MIN, PITCH_MAX);
   }
 
   // PC(파이썬)로 현재 스태빌라이저의 Roll, Pitch 전송 (115200bps 권장)
   Serial.print("STAB,");
-  Serial.print(stab_roll);  // 계산된 아두이노 Roll 변수
-  Serial.print(",");
-  Serial.println(stab_pitch); // 계산된 아두이노 Pitch 변수
-  
+    
+    // 만약 IMU 원본 데이터를 전송하고 싶다면 (권장):
+    // Serial.print(imu_roll);    // 💡 실제 코드에 있는 Roll 변수명으로 변경 (예: roll, imu_roll 등)
+    // Serial.print(",");
+    // Serial.println(imu_pitch); // 💡 실제 코드에 있는 Pitch 변수명으로 변경 (예: pitch, imu_pitch 등)
+    
+    // 또는, 필터를 거친 최종 목표 각도를 전송하고 싶으시다면:
+    Serial.print(filtered_target_roll);
+    Serial.print(",");
+    Serial.println(filtered_target_pitch);
+    
   delay(10); 
 }

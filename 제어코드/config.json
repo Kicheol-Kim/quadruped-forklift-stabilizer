@@ -1,0 +1,15 @@
+{
+    "version": "1.0",
+    "timestamp": "2026-07-21 06:41:47",
+    "num_items": 8,
+    "selected_columns": [
+        "imu.rpy (Roll, Pitch, Yaw)",
+        "imu.gyroscope (gx, gy, gz)",
+        "imu.accelerometer (ax, ay, az)",
+        "velocity (Vx, Vy, Vz)",
+        "yawSpeed",
+        "position (X, Y, Z)",
+        "footForce (센서 원시값 4다리)",
+        "footForceEst (알고리즘 추정값 4다리)"
+    ]
+}

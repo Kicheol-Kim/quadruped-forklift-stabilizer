@@ -1,131 +1,133 @@
 import socket
-import threading
-import time
+import struct
+import json
 import csv
-import datetime
+import time
 import os
+import sys
 
-# --- 통신 설정 ---
-UDP_IP_BIND = "0.0.0.0"
-DATA_PORT = 9998      
-INTERNAL_PORT = 9995  
-
-sock_data = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock_data.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-sock_data.bind((UDP_IP_BIND, DATA_PORT))
-
-sock_ctrl = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock_ctrl.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-sock_ctrl.bind(("127.0.0.1", INTERNAL_PORT))
-
-# 💡 시스템 상태 저장소 (dist와 radius 포함)
-sys_state = {
-    'is_recording': False,
-    'target_vx': 0.0, 'target_yaw': 0.0, 'target_r': 0.0, 'target_p': 0.0,
-    'target_dist': 0.0, 'target_radius': 0.0
+# ==========================================
+# 1. 데이터 파싱 맵 (C++ 배열 인덱스 매칭)
+# UI의 config.json에 저장되는 문자열과 동일해야 합니다.
+# ==========================================
+DATA_MAP = {
+    "imu.rpy (Roll, Pitch, Yaw)": [("Roll_rad", 0), ("Pitch_rad", 1), ("Yaw_rad", 2)],
+    "imu.quaternion (q0, q1, q2, q3)": [("q0", 3), ("q1", 4), ("q2", 5), ("q3", 6)],
+    "imu.gyroscope (gx, gy, gz)": [("Gyro_X", 7), ("Gyro_Y", 8), ("Gyro_Z", 9)],
+    "imu.accelerometer (ax, ay, az)": [("Acc_X", 10), ("Acc_Y", 11), ("Acc_Z", 12)],
+    
+    "velocity (Vx, Vy, Vz)": [("Vx", 13), ("Vy", 14), ("Vz", 15)],
+    "yawSpeed": [("YawRate", 16)],
+    "position (X, Y, Z)": [("Pos_X", 17), ("Pos_Y", 18), ("Pos_Z", 19)],
+    
+    "footForce (센서 원시값 4다리)": [("FF_FR", 20), ("FF_FL", 21), ("FF_RR", 22), ("FF_RL", 23)],
+    "footForceEst (알고리즘 추정값 4다리)": [("FFE_FR", 24), ("FFE_FL", 25), ("FFE_RR", 26), ("FFE_RL", 27)],
+    
+    "motor.q (회전 위치)": [(f"Mot{i}_q", 28 + i*5 + 0) for i in range(12)],
+    "motor.dq (회전 속도)": [(f"Mot{i}_dq", 28 + i*5 + 1) for i in range(12)],
+    "motor.ddq (각가속도)": [(f"Mot{i}_ddq", 28 + i*5 + 2) for i in range(12)],
+    "motor.tauEst (추정 토크)": [(f"Mot{i}_tauEst", 28 + i*5 + 3) for i in range(12)],
+    "motor.temperature (온도)": [(f"Mot{i}_temp", 28 + i*5 + 4) for i in range(12)],
+    
+    "bms.SOC (배터리 잔량 %)": [("Batt_SOC", 88)],
+    "bms.current / voltage": [("Batt_Current_A", 89), ("Batt_Voltage_V", 90)],
+    "tick (타임스탬프)": [("Tick", 91)]
 }
 
-sensor_data = {
-    'go1_vx': 0.0, 'go1_yaw_rate': 0.0, 'go1_r': 0.0, 'go1_p': 0.0, 'go1_y': 0.0,
-    'go1_ax': 0.0, 'go1_ay': 0.0, 'go1_az': 0.0,
-    'stab_r': 0.0, 'stab_p': 0.0, 'obj_r': 0.0, 'obj_p': 0.0
-}
+# ==========================================
+# 2. 통신 및 파일 설정
+# ==========================================
+UDP_IP = "0.0.0.0"   # 모든 IP에서 수신 대기
+UDP_PORT = 9998      # 💡 C++ 엔진에서 데이터를 쏘는 목적지 포트와 동일해야 함!
 
-def receive_ctrl():
-    print("🟢 [Ctrl_Rx] 컨트롤러 통신 대기 중... (Port: 9995)")
-    while True:
-        try:
-            data, _ = sock_ctrl.recvfrom(1024)
-            msg = data.decode('utf-8').strip()
-            if msg.startswith("CTRL,"):
-                parts = msg.split(',')
-                # 💡 길이 상관없이 안전하게 파싱하도록 보강
-                sys_state['is_recording'] = bool(int(parts[1]))
-                sys_state['target_vx'] = float(parts[2])
-                sys_state['target_yaw'] = float(parts[3])
-                sys_state['target_r'] = float(parts[4])
-                sys_state['target_p'] = float(parts[5])
-                
-                # 데이터가 8개(Index 7)까지 꽉 차있으면 dist와 radius 저장
-                if len(parts) >= 8:
-                    sys_state['target_dist'] = float(parts[6])
-                    sys_state['target_radius'] = float(parts[7])
-        except Exception as e: 
-            pass
+def main():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((UDP_IP, UDP_PORT))
+    print(f"📡 [수집기] 백그라운드 대기 중... (UI의 수집 시작 명령을 기다립니다)")
 
-def receive_sensors():
-    print("🟢 [Sensor_Rx] 아두이노/Go1 통신 대기 중... (Port: 9998)")
-    while True:
-        try:
-            data, _ = sock_data.recvfrom(1024)
-            msg = data.decode('utf-8').strip()
-            parts = msg.split(',')
-            
-            if msg.startswith("GO1,") and len(parts) >= 9:
-                sensor_data['go1_vx'] = float(parts[1])
-                sensor_data['go1_yaw_rate'] = float(parts[2])
-                sensor_data['go1_r'] = float(parts[3]); sensor_data['go1_p'] = float(parts[4])
-            elif msg.startswith("STAB,") and len(parts) >= 3:
-                sensor_data['stab_r'] = float(parts[1]); sensor_data['stab_p'] = float(parts[2])
-            elif msg.startswith("OBJ,") and len(parts) >= 3:
-                sensor_data['obj_r'] = float(parts[1]); sensor_data['obj_p'] = float(parts[2])
-        except Exception as e: 
-            pass
-
-def logging_loop():
-    print("📡 [Collector] 백그라운드 데이터 로깅 스레드 시작됨!")
-    os.makedirs("collected_data", exist_ok=True) 
-
+    is_recording = False
     csv_file = None
-    csv_writer = None
-    start_time = 0.0
-    was_recording = False
+    writer = None
+    target_indices = []
+    start_time = None
+    packet_count = 0
 
-    while True:
-        is_rec = sys_state['is_recording']
-        
-        # 녹화 시작
-        if is_rec and not was_recording:
-            filename = f"collected_data/run_Vx{sys_state['target_vx']:.2f}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            try:
-                csv_file = open(filename, mode='w', newline='')
-                csv_writer = csv.writer(csv_file)
-                # 💡 헤더에 Dist와 Radius 추가 완료
-                headers = [
-                    'Time(s)', 'Target_Vx', 'Target_Dist', 'Target_Radius', 'Go1_Vx', 'Target_YawRate', 'Go1_YawRate',
-                    'Target_Roll', 'Go1_Roll', 'Stab_Roll', 'Obj_Roll',
-                    'Target_Pitch', 'Go1_Pitch', 'Stab_Pitch', 'Obj_Pitch'
-                ]
-                csv_writer.writerow(headers)
-                start_time = time.time()
-                print(f"⏺ [Collector] 녹화 시작됨: {filename}")
-                was_recording = True
-            except Exception as e:
-                print(f"❌ [Collector Error] 파일 생성 실패: {e}")
+    try:
+        while True:
+            packet, addr = sock.recvfrom(1024)
+            
+            # ----------------------------------------------------
+            # 1. 파이썬 UI로부터 제어 명령(START/STOP)을 받았을 때
+            # (명령어 패킷은 길이가 짧은 문자열임)
+            # ----------------------------------------------------
+            if len(packet) < 100:
+                try:
+                    msg = packet.decode('utf-8')
+                    if msg == "START_REC":
+                        # 명령을 받으면 비로소 config.json을 읽습니다.
+                        if os.path.exists("config.json"):
+                            with open("config.json", "r", encoding="utf-8") as f:
+                                cfg = json.load(f)
+                                selected_categories = cfg.get("selected_columns", [])
 
-        # 데이터 기록 중
-        elif is_rec and was_recording and csv_writer:
-            elapsed = time.time() - start_time
-            # 💡 Row 배열에 Dist와 Radius 매핑 완료
-            row = [
-                f"{elapsed:.3f}",
-                f"{sys_state['target_vx']:.3f}", f"{sys_state['target_dist']:.3f}", f"{sys_state['target_radius']:.3f}", f"{sensor_data['go1_vx']:.3f}",
-                f"{sys_state['target_yaw']:.3f}", f"{sensor_data['go1_yaw_rate']:.3f}",
-                f"{sys_state['target_r']:.3f}", f"{sensor_data['go1_r']:.3f}", f"{sensor_data['stab_r']:.3f}", f"{sensor_data['obj_r']:.3f}",
-                f"{sys_state['target_p']:.3f}", f"{sensor_data['go1_p']:.3f}", f"{sensor_data['stab_p']:.3f}", f"{sensor_data['obj_p']:.3f}"
-            ]
-            csv_writer.writerow(row)
+                            # 헤더 및 인덱스 추출
+                            csv_headers = ["Time(s)"]
+                            target_indices = []
+                            for cat in selected_categories:
+                                if cat in DATA_MAP:
+                                    for col_name, idx in DATA_MAP[cat]:
+                                        csv_headers.append(col_name)
+                                        target_indices.append(idx)
 
-        # 녹화 종료
-        elif not is_rec and was_recording:
-            if csv_file: 
-                csv_file.close()
-            print("⏹ [Collector] 녹화 종료 및 파일 저장 완료.")
-            was_recording = False
+                            # CSV 파일 생성 및 열기
+                            timestamp = time.strftime("%Y%m%d_%H%M%S")
+                            filename = f"Go1_Log_{timestamp}.csv"
+                            csv_file = open(filename, mode="w", newline="")
+                            writer = csv.writer(csv_file)
+                            
+                            metadata = f"# [METADATA] Config: {cfg.get('timestamp', 'N/A')}, Items: {len(selected_categories)}"
+                            csv_file.write(metadata + "\n")
+                            writer.writerow(csv_headers)
 
-        time.sleep(0.01)
+                            is_recording = True
+                            start_time = time.time()
+                            packet_count = 0
+                            print(f"🔴 [수집기] 데이터 기록 시작! -> {filename}")
+                        else:
+                            print("⚠️ [수집기] config.json 파일이 없습니다. 메인 UI에서 설정을 먼저 저장해주세요.")
+
+                    elif msg == "STOP_REC":
+                        if is_recording:
+                            is_recording = False
+                            if csv_file:
+                                csv_file.close()
+                                csv_file = None
+                            print(f"⏹️ [수집기] 데이터 기록 종료! (총 {packet_count} 행 저장됨)")
+                except UnicodeDecodeError:
+                    pass # 문자열이 아닌 알 수 없는 패킷은 무시
+
+            # ----------------------------------------------------
+            # 2. C++ 엔진으로부터 센서 데이터를 받았을 때 (기록 중일 때만)
+            # (우리가 맞춘 규격: 92개의 float = 정확히 368바이트)
+            # ----------------------------------------------------
+            elif len(packet) == 368 and is_recording:
+                data = struct.unpack('<92f', packet)
+                t = time.time() - start_time
+                
+                # 선택된 데이터만 쏙쏙 뽑아서 기록
+                row = [t] + [data[i] for i in target_indices]
+                writer.writerow(row)
+                
+                packet_count += 1
+                if packet_count % 1000 == 0:
+                    print(f"   ... {packet_count} 패킷 기록됨 (Time: {t:.1f}s)")
+
+    except KeyboardInterrupt:
+        pass # main.py에서 terminate()로 종료시킬 것이므로 조용히 넘어감
+    finally:
+        if csv_file:
+            csv_file.close()
+        sock.close()
 
 if __name__ == "__main__":
-    threading.Thread(target=receive_ctrl, daemon=True).start()
-    threading.Thread(target=receive_sensors, daemon=True).start()
-    logging_loop()
+    main()
